@@ -1,0 +1,78 @@
+@font-face {
+    font-family: "Sagona Regular";
+    src: url("./assets/fonts/sagona/SAGONABOOK.TTF");
+}
+
+@font-face {
+    font-family: "Sagona Bold";
+    src: url("./assets/fonts/sagona/SAGONABOOKBOLD.TTF");
+}
+
+html::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+html::-webkit-scrollbar-thumb {
+    background-color: #8b4513;
+    border-radius: 10px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+    background-color: #6b3f1f;
+}
+
+html::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar {
+    width: 8px; /* Set width of the scrollbar */
+    height: 8px; /* Set height of the scrollbar (for horizontal scrolling) */
+}
+
+/* Customize scrollbar handle (the draggable part) */
+::-webkit-scrollbar-thumb {
+    background-color: #8b4513; /* Brown color */
+    border-radius: 10px; /* Optional: Round corners for the thumb */
+    border: 2px solid #5c2a00; /* Optional: Add border for contrast */
+}
+
+/* Customize scrollbar when hovered */
+::-webkit-scrollbar-thumb:hover {
+    background-color: #6b3f1f; /* Darker brown on hover */
+}
+
+/* Customize scrollbar track (background) */
+::-webkit-scrollbar-track {
+    background-color: #f1f1f1; /* Light color for track */
+    border-radius: 10px; /* Optional: Round corners for track */
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.nav__links {
+    font-family: "Sagona Bold";
+}
+
+.subtitle__container,
+h1.title,
+h2.title {
+    font-family: "Sagona Bold";
+}
+
+.button__container .cta__btn,
+.title-reg,
+p.title {
+    font-family: "Sagona Regular";
+}
+
+.section__top_orders button span {
+    background-color: #5c2a00 !important;
+}
+
+.section__top_orders .absolute.space-x-3 button {
+    background-color: #5c2a00 !important;
+}
