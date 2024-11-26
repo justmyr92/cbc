@@ -48,17 +48,80 @@ const AddOrdersModal = ({
         e.target.value = "";
     };
 
+    // const transformDataToOrderFormat = (rawData: any[]): any[] => {
+    //     const ordersMap: { [key: string]: any } = {};
+
+    //     rawData.forEach((row: any) => {
+    //         const orderDate = new Date(row["Order Date"]);
+    //         if (isNaN(orderDate.getTime())) {
+    //             // Handle invalid date here
+    //         }
+    //         const formattedDate = orderDate.toISOString(); // Formats to "YYYY-MM-DDTHH:MM:SS.sssZ"
+    //         const transactionNumber = row["Transaction No."]; // Ensure the key matches your data
+
+    //         // Check if the order already exists in the map
+    //         if (!ordersMap[transactionNumber]) {
+    //             ordersMap[transactionNumber] = {
+    //                 transaction_number: transactionNumber,
+    //                 order_date: formattedDate, // Ensure the key matches your data
+    //                 order_type: row["Order Type"],
+    //                 orderlist: [],
+    //                 total: 0, // Initialize total for each transaction
+    //             };
+    //         }
+
+    //         // Create order list item and add it to orderlist
+    //         console.log(row["Product"]);
+
+    //         const orderItem = {
+    //             category: row["Category"],
+    //             product_name: row["Product"],
+    //             //pget product id if name is match
+    //             product_id: products.find(
+    //                 (product: any) => product.product_name === row["Product"]
+    //             )?.product_id,
+
+    //             quantity: row["Quantity"],
+    //             price: row["Price"],
+    //             sub_total: row["Subtotal"],
+    //         };
+
+    //         // Add the item to the orderlist
+    //         ordersMap[transactionNumber].orderlist.push(orderItem);
+
+    //         // Update the total for the transaction
+    //         ordersMap[transactionNumber].total += orderItem.sub_total;
+    //     });
+
+    //     // Return the array of orders
+    //     return Object.values(ordersMap);
+    // };
     const transformDataToOrderFormat = (rawData: any[]): any[] => {
         const ordersMap: { [key: string]: any } = {};
 
         rawData.forEach((row: any) => {
             const transactionNumber = row["Transaction No."]; // Ensure the key matches your data
 
+            // Handle the Excel date serial number
+            const orderDateExcel = row["Order Date"]; // Excel date serial number
+            let orderDate;
+
+            // Check if the order date is an Excel date serial number
+            if (typeof orderDateExcel === "number") {
+                const jsDate = new Date(
+                    (orderDateExcel - 25569) * 86400 * 1000
+                ); // Convert to JavaScript Date
+                orderDate = jsDate.toISOString(); // Convert to ISO string format (YYYY-MM-DDTHH:MM:SS.sssZ)
+            } else {
+                // Fallback if the date is not a number (maybe a valid date string already)
+                orderDate = orderDateExcel;
+            }
+
             // Check if the order already exists in the map
             if (!ordersMap[transactionNumber]) {
                 ordersMap[transactionNumber] = {
                     transaction_number: transactionNumber,
-                    order_date: row["Order Date"], // Ensure the key matches your data
+                    order_date: orderDate, // Use the formatted date
                     order_type: row["Order Type"],
                     orderlist: [],
                     total: 0, // Initialize total for each transaction
@@ -66,20 +129,20 @@ const AddOrdersModal = ({
             }
 
             // Create order list item and add it to orderlist
-            console.log(row["Product"]);
-
             const orderItem = {
                 category: row["Category"],
                 product_name: row["Product"],
-                //pget product id if name is match
                 product_id: products.find(
                     (product: any) => product.product_name === row["Product"]
                 )?.product_id,
-
                 quantity: row["Quantity"],
                 price: row["Price"],
                 sub_total: row["Subtotal"],
             };
+
+            products.map((product: any) => {
+                console.log(product.product_name, row["Product"], "hehe");
+            });
 
             // Add the item to the orderlist
             ordersMap[transactionNumber].orderlist.push(orderItem);
@@ -91,7 +154,6 @@ const AddOrdersModal = ({
         // Return the array of orders
         return Object.values(ordersMap);
     };
-
 
     const handleConfirmUpload = async () => {
         try {
@@ -121,12 +183,6 @@ const AddOrdersModal = ({
                     });
                     setReload(true);
                     setShowAddModal(false);
-                } else {
-                    Swal.fire({
-                        title: "Error!",
-                        text: "Some orders failed to upload.",
-                        icon: "error",
-                    });
                 }
             } else {
                 console.log("Upload canceled by user.");
