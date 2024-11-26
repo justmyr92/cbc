@@ -154,9 +154,10 @@ const AddProductModal = ({
                             value={productType}
                             onChange={(e) => setProductType(e.target.value)}
                         >
-                            <option value="meal" selected>
-                                Meal
+                            <option value="meal" disabled>
+                                Select Type
                             </option>
+                            <option value="meal">meal</option>
                             <option value="drinks">Drinks</option>
                         </select>
                     </label>

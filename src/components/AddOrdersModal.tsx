@@ -92,22 +92,6 @@ const AddOrdersModal = ({
         return Object.values(ordersMap);
     };
 
-    // const handleConfirmUpload = async () => {
-    //     console.log(orders, products);
-    //     try {
-    //         const responses = await Promise.all(
-    //             orders.map((order: any) => addOrder(order)) // Call addOrder for each order in parallel
-    //         );
-
-    //         if (responses.every((response) => response)) {
-    //             // Check if all responses are successful
-    //             setReload(true);
-    //             setShowAddModal(false);
-    //         }
-    //     } catch (error) {
-    //         console.error("Error uploading orders:", error);
-    //     }
-    // };
 
     const handleConfirmUpload = async () => {
         try {
