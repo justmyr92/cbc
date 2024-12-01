@@ -9,6 +9,8 @@ import {
     Tooltip,
     Legend,
 } from "chart.js";
+import { useEffect, useState } from "react";
+import { getPeakHours } from "../services/orders.service";
 
 // Registering Chart.js components
 ChartJS.register(
@@ -21,99 +23,136 @@ ChartJS.register(
     Legend
 );
 
-const SalesLineChart = (orders: any) => {
-    console.log(orders, "asdasd");
-    // const orderss = [
-    //     {
-    //         order_id: 120,
-    //         order_date: "2024-12-12T02:44:00.000Z",
-    //         total_amount: "556.00",
-    //     },
-    //     {
-    //         order_id: 117,
-    //         order_date: "2024-09-15T02:47:00.000Z",
-    //         total_amount: "650.00",
-    //     },
-    //     {
-    //         order_id: 118,
-    //         order_date: "2024-02-15T02:48:00.000Z",
-    //         total_amount: "318.00",
-    //     },
-    //     {
-    //         order_id: 121,
-    //         order_date: "2024-02-01T04:27:00.000Z",
-    //         total_amount: "2352.00",
-    //     },
-    //     {
-    //         order_id: 119,
-    //         order_date: "2024-01-03T03:08:00.000Z",
-    //         total_amount: "1691.00",
-    //     },
-    // ];
+const SalesLineChart = ({
+    year,
+    store_id,
+}: {
+    year: string;
+    store_id: string;
+}) => {
+    console.log(year, store_id, "hahaha");
+    const [orderss, setOrderss] = useState<any[]>([]); // Store the fetched order data
 
-    // Group orders by month and calculate the most selling hour per month
-    const groupedByMonth: any = {};
-    orders.orders.forEach((order: any) => {
-        const date = new Date(order.order_date);
-        const month = date.getMonth() + 1; // Months are 0-indexed
-        const hour = date.getHours();
-        const total_amount = parseFloat(order.total_amount);
+    useEffect(() => {
+        console.log(
+            "Fetching peak hours for year:",
+            year,
+            "store_id:",
+            store_id
+        );
+        const fetchPeakHours = async () => {
+            try {
+                const data = await getPeakHours(year, store_id); // Adjust the params as needed
+                setOrderss(data); // Assuming data is an array of objects with { order_month, order_hour, total_sales }
 
-        if (!groupedByMonth[month]) {
-            groupedByMonth[month] = [];
-        }
-        groupedByMonth[month].push({ hour, total_amount });
-    });
-
-    const result: any = {};
-    Object.keys(groupedByMonth).forEach((month) => {
-        const hourlySales: any = {};
-        groupedByMonth[month].forEach(
-            ({
-                hour,
-                total_amount,
-            }: {
-                hour: string;
-                total_amount: string;
-            }) => {
-                if (!hourlySales[hour]) {
-                    hourlySales[hour] = 0;
-                }
-                hourlySales[hour] += total_amount;
+                console.log(data, year, store_id, "hahahas");
+            } catch (error) {
+                console.error("Error fetching peak hours:", error);
             }
-        );
-
-        // Find the hour with the maximum sales
-        const maxHour = Object.keys(hourlySales).reduce((a, b) =>
-            hourlySales[a] > hourlySales[b] ? a : b
-        );
-        result[month] = {
-            hour: parseInt(maxHour),
-            sales: hourlySales[maxHour],
         };
+
+        fetchPeakHours();
+    }, [year, store_id]); // Dependencies that should trigger the effect
+
+    // Initialize a 2D array for storing sales data for each month and hour (12 months, 13 hours from 8 AM to 8 PM)
+    const monthlyHourlySales = new Array(12)
+        .fill(0)
+        .map(() => new Array(13).fill(0));
+
+    // Assuming 'orderss' is an array of objects with { order_month, order_hour, total_sales }
+    orderss.forEach((order: any) => {
+        const monthIndex = parseInt(order.order_month, 10) - 1; // Convert month to index (0-based)
+        const orderHour = parseInt(order.order_hour);
+        console.log(orderHour, "aas");
+        const totalSales = parseFloat(order.total_sales); // Convert total_sales to a number
+
+        if (
+            monthIndex >= 0 &&
+            monthIndex < 12 &&
+            orderHour >= 0 &&
+            orderHour < 24
+        ) {
+            console.log(orderHour, "aass");
+            monthlyHourlySales[monthIndex][orderHour] = totalSales; // Set total_sales for the corresponding month and hour
+        }
     });
 
-    // Prepare chart data
+    console.log(monthlyHourlySales, "aasss");
+
+    // Create X-axis labels by combining month and hour, only if there are sales
+    const xLabels: string[] = [];
+    const salesData: number[] = [];
+
+    const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ];
+
+    // Loop through all the months
+    for (let month = 0; month < 12; month++) {
+        // Check if this month has sales
+        for (let hour = 0; hour < 24; hour++) {
+            // Only add to the chart if the hour has sales data
+            if (monthlyHourlySales[month][hour] > 0) {
+                xLabels.push(`${months[month]} ${hour}:00`); // Add the formatted label (month and hour)
+                salesData.push(monthlyHourlySales[month][hour]); // Push the sales data for that hour
+            }
+        }
+    }
+
+    console.log(salesData, "aassss");
+
+    // Chart.js data configuration
     const chartData = {
-        labels: Object.keys(result).map(
-            (month) => `${month}/2024 ${result[month].hour}:00`
-        ), // X-axis: months with time
+        labels: xLabels, // Use filtered X-axis labels
         datasets: [
             {
-                label: "Most Selling Hour Sales",
-                data: Object.values(result).map((month: any) => month.sales),
-                borderColor: "#8884d8",
-                backgroundColor: "rgba(136, 132, 216, 0.2)",
-                fill: false,
-                lineTension: 0,
+                label: "Peak Season",
+                data: salesData, // Use the corresponding sales data
+                borderColor: "rgba(75, 192, 192, 1)",
+                backgroundColor: "rgba(75, 192, 192, 0.2)",
+                fill: true,
+                tension: 0.1,
             },
         ],
     };
 
+    // Chart.js options to customize axis and appearance
+    const options = {
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: "Month and Hour",
+                },
+                ticks: {
+                    maxRotation: 45, // Rotate X-axis labels to avoid overlapping
+                    minRotation: 45,
+                },
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: "Total Sales",
+                },
+            },
+        },
+    };
+
     return (
         <div>
-            <h3>Sales by Most Selling Hour (Monthly)</h3>
-            <Line data={chartData} />
+            <h3>Sales by Hour and Month</h3>
+            <Line data={chartData} options={options} />
         </div>
     );
 };

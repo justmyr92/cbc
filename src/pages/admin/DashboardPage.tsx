@@ -16,7 +16,7 @@ import {
     Legend,
     ArcElement,
 } from "chart.js"; // Import necessary chart.js components
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import Recommendation from "../../components/Recommendation";
 import {
     getCategories,
@@ -24,6 +24,8 @@ import {
 } from "../../services/products.service";
 import { authUser } from "../../services/auth.service";
 import SalesLineChart from "../../components/SalesLineChart";
+import AnnualSalesChart from "../../components/AnnualSalesChart";
+import PercentagePerMonth from "../../components/PercentagePerMonth";
 
 // Register the components to Chart.js
 ChartJS.register(
@@ -50,7 +52,7 @@ const DashboardPage = () => {
     const navigate = useNavigate();
     const [stores, setStores] = useState([]); // Stores array
     const [orders, setOrders] = useState<Order[]>([]);
-    const [saleType, setSaleType] = useState<any>({}); // Sales data by store
+    // const [saleType, setSaleType] = useState<any>({}); // Sales data by store
     const [monthlySales, setMonthlySales] = useState<number[]>([]); // Monthly sales is an array of numbers
     const [year, setYear] = useState("2024"); // Default year set to "All"
     const [salesCount, setSalesCount] = useState(0); // Total sales count
@@ -90,15 +92,18 @@ const DashboardPage = () => {
                 } else {
                     setStore("All"); // Set store to "All" if not a manager
                 }
-                // Fetch store locations and orders if the token is verified
-                fetchStores();
-                fetchOrders();
-                fetchSold();
             }
         };
 
         verifyUser();
-    }, [navigate, year, store]);
+    }, [navigate]);
+
+    useEffect(() => {
+        // Fetch store locations and orders if the token is verified
+        fetchStores();
+        fetchOrders();
+        fetchSold();
+    }, [year, store]);
 
     // Fetch store locations
     const fetchStores = async () => {
@@ -109,9 +114,9 @@ const DashboardPage = () => {
     };
 
     const fetchSold = async () => {
-        const data = await getTopSoldProductsNoLimint(year);
+        const data = await getTopSoldProductsNoLimint(year, store);
         if (data) {
-            console.log("haha", data);
+            console.log("hahahaha", data);
             setTopSold(data);
         }
     };
@@ -123,7 +128,7 @@ const DashboardPage = () => {
         if (data) {
             setOrders(data as Order[]);
             setMonthlySales(getMonthlySales(data)); // Assuming getMonthlySales accepts Order[] as well
-            const salesData = setSalesData(data); // Updated sales data
+            // const salesData = setSalesData(data); // Updated sales data
             console.log(getMonthlySales(data), "ASd");
             console.log(data, "asd");
             console.log(
@@ -131,7 +136,7 @@ const DashboardPage = () => {
                 "ASd"
             );
 
-            setSaleType(salesData); // Store the sales data for further use
+            // setSaleType(salesData); // Store the sales data for further use
             setSalesCount(data.length);
             setCategoryCount(categories_count.length); // Update categories count
             setProductsCount(products_count.length);
@@ -149,7 +154,7 @@ const DashboardPage = () => {
     const calculatePercentageChanges = (amounts: any) => {
         let percentages = [];
         // Start with "0%" for the first month (no previous month to compare)
-        percentages.push("0%");
+        percentages.push("0");
         // Loop through the sales data and calculate the percentage change for each month
         for (let i = 1; i < amounts.length; i++) {
             const currentValue = amounts[i];
@@ -157,20 +162,20 @@ const DashboardPage = () => {
             // Handle edge case when previous value is 0
             if (previousValue === 0) {
                 if (currentValue === 0) {
-                    percentages.push("0%"); // No change if both are 0
+                    percentages.push("0"); // No change if both are 0
                 } else {
-                    percentages.push("100%"); // First increase from 0 to non-zero is 100%
+                    percentages.push("100"); // First increase from 0 to non-zero is 100%
                 }
             } else if (currentValue === 0) {
                 // Calculate the percentage decrease if the current value is 0
                 const change =
                     ((currentValue - previousValue) / previousValue) * 100;
-                percentages.push(`${change.toFixed(2)}%`);
+                percentages.push(`${change.toFixed(2)}`);
             } else {
                 // Normal percentage change calculation
                 const change =
                     ((currentValue - previousValue) / previousValue) * 100;
-                percentages.push(`${change.toFixed(2)}%`);
+                percentages.push(`${change.toFixed(2)}`);
             }
         }
 
@@ -181,13 +186,28 @@ const DashboardPage = () => {
     const updateMonthsWithPercentage = () => {
         const updatedMonths = [];
 
+        // Loop through the months array and append the percentage change to each month
+        for (let i = 0; i < months.length; i++) {
+            // Add the percentage change next to the month name
+            updatedMonths.push(`${months[i]}`);
+        }
+
+        return updatedMonths;
+    };
+
+    const updateMonthsWithPercentages = () => {
+        const updatedMonths = [];
+
         // Calculate the percentage changes for all months
         const percentageChanges = calculatePercentageChanges(monthlySales);
 
         // Loop through the months array and append the percentage change to each month
         for (let i = 0; i < months.length; i++) {
             // Add the percentage change next to the month name
-            updatedMonths.push(`${months[i]} (${percentageChanges[i]})`);
+            updatedMonths.push({
+                month: months[i],
+                percentage: percentageChanges[i],
+            });
         }
 
         return updatedMonths;
@@ -207,28 +227,28 @@ const DashboardPage = () => {
         return monthlySales;
     };
 
-    const setSalesData = (orders: Order[]) => {
-        const salesByStore: {
-            [key: string]: { dineIn: number; takeOut: number };
-        } = {};
+    // const setSalesData = (orders: Order[]) => {
+    //     const salesByStore: {
+    //         [key: string]: { dineIn: number; takeOut: number };
+    //     } = {};
 
-        orders.forEach((order) => {
-            const storeId = order.store_id.toString();
-            const amount = parseFloat(order.total_amount);
+    //     orders.forEach((order) => {
+    //         const storeId = order.store_id.toString();
+    //         const amount = parseFloat(order.total_amount);
 
-            if (!salesByStore[storeId]) {
-                salesByStore[storeId] = { dineIn: 0, takeOut: 0 };
-            }
+    //         if (!salesByStore[storeId]) {
+    //             salesByStore[storeId] = { dineIn: 0, takeOut: 0 };
+    //         }
 
-            if (order.order_type === "Dine In") {
-                salesByStore[storeId].dineIn += amount;
-            } else if (order.order_type === "Take Out") {
-                salesByStore[storeId].takeOut += amount;
-            }
-        });
+    //         if (order.order_type === "Dine In") {
+    //             salesByStore[storeId].dineIn += amount;
+    //         } else if (order.order_type === "Take Out") {
+    //             salesByStore[storeId].takeOut += amount;
+    //         }
+    //     });
 
-        return salesByStore;
-    };
+    //     return salesByStore;
+    // };
 
     const chartData = {
         labels: updateMonthsWithPercentage(), // Labels for months
@@ -236,41 +256,61 @@ const DashboardPage = () => {
             {
                 label: "Monthly Sales",
                 data: monthlySales, // Monthly sales data
-                backgroundColor: "rgba(75, 192, 192, 0.2)", // Bar color
-                borderColor: "rgba(75, 192, 192, 1)", // Border color
+                backgroundColor: "rgba(61, 42, 33, 0.8)", // Bar color
+                borderColor: "rgba(61, 42, 33, 1)", // Border color
                 borderWidth: 1,
             },
         ],
     };
 
-    const pieChart = {
-        labels: ["Dine In", "Take Out"],
-        datasets: [
-            {
-                label: "Sales by Store",
-                data: [
-                    // Sum of Dine In and Take Out sales for each store
-                    Object.values(saleType).reduce(
-                        (acc, sales: any) => acc + sales.dineIn,
-                        0
-                    ),
-                    Object.values(saleType).reduce(
-                        (acc, sales: any) => acc + sales.takeOut,
-                        0
-                    ),
-                ],
-                backgroundColor: [
-                    "rgba(75, 192, 192, 0.2)", // Dine In color
-                    "rgba(255, 99, 132, 0.2)", // Take Out color (You can customize this color)
-                ],
-                borderColor: [
-                    "rgba(75, 192, 192, 1)", // Dine In border color
-                    "rgba(255, 99, 132, 1)", // Take Out border color
-                ],
-                borderWidth: 1,
+    const options = {
+        plugins: {
+            legend: {
+                display: true, // Controls the legend display
             },
-        ],
+        },
+        scales: {
+            y: {
+                title: {
+                    display: true,
+                    text: "Sales", // Y-axis label
+                    font: {
+                        size: 16, // Customize the font size (optional)
+                    },
+                },
+                beginAtZero: true, // Ensures the Y-axis starts at zero
+            },
+        },
     };
+
+    // const pieChart = {
+    //     labels: ["Dine In", "Take Out"],
+    //     datasets: [
+    //         {
+    //             label: "Sales by Store",
+    //             data: [
+    //                 // Sum of Dine In and Take Out sales for each store
+    //                 Object.values(saleType).reduce(
+    //                     (acc, sales: any) => acc + sales.dineIn,
+    //                     0
+    //                 ),
+    //                 Object.values(saleType).reduce(
+    //                     (acc, sales: any) => acc + sales.takeOut,
+    //                     0
+    //                 ),
+    //             ],
+    //             backgroundColor: [
+    //                 "rgba(75, 192, 192, 0.2)", // Dine In color
+    //                 "rgba(255, 99, 132, 0.2)", // Take Out color (You can customize this color)
+    //             ],
+    //             borderColor: [
+    //                 "rgba(75, 192, 192, 1)", // Dine In border color
+    //                 "rgba(255, 99, 132, 1)", // Take Out border color
+    //             ],
+    //             borderWidth: 1,
+    //         },
+    //     ],
+    // };
 
     return (
         <section className="dashboard flex h-screen">
@@ -305,7 +345,7 @@ const DashboardPage = () => {
                     </div>
 
                     {/* Store Selector */}
-                    {!localStorage.getItem("store_id") ? (
+                    {storeID ? (
                         <div className="store-selector">
                             <label htmlFor="store" className="mr-2">
                                 Store
@@ -331,100 +371,6 @@ const DashboardPage = () => {
                         ""
                     )}
                 </div>
-                {/* 3d2a21, 5d422b, 281811,644e43,  442a13 */}
-                {/* <div className="stats shadow mb-4 w-full text-white">
-                    <div className="stat bg-[#3d2a21]">
-                        <div className="stat-figure">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                className="inline-block h-8 w-8 stroke-current"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M6 12l6-6 6 6"
-                                ></path>
-                            </svg>
-                        </div>
-                        <div className="stat-title">Total Sales</div>
-                        <div className="stat-value">{salesCount}</div>
-                        <div className="stat-desc">Items sold</div>
-                    </div>
-
-                    <div className="stat bg-[#5d422b]">
-                        <div className="stat-figure text-secondary">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                className="inline-block h-8 w-8 stroke-current"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 9V3l-7 9h7v7l9-11h-7z"
-                                ></path>
-                            </svg>
-                        </div>
-                        <div className="stat-title">Total Products</div>
-                        <div className="stat-value text-secondary">
-                            {productsCount}
-                        </div>
-                        <div className="stat-desc">Available products</div>
-                    </div>
-
-                    <div className="stat">
-                        <div className="stat-figure text-success">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                className="inline-block h-8 w-8 stroke-current"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M4 6h16M4 12h16m-7 6h7"
-                                ></path>
-                            </svg>
-                        </div>
-                        <div className="stat-title">Total Sales Amount</div>
-                        <div className="stat-value text-success">
-                            Php {totalSales.toLocaleString()}
-                        </div>
-                        <div className="stat-desc">Total revenue</div>
-                    </div>
-
-                    <div className="stat">
-                        <div className="stat-figure text-warning">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                className="inline-block h-8 w-8 stroke-current"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 4v16m8-8H4"
-                                ></path>
-                            </svg>
-                        </div>
-                        <div className="stat-title">Total Categories</div>
-                        <div className="stat-value text-warning">
-                            {categoryCount}
-                        </div>
-                        <div className="stat-desc">
-                            Number of product categories
-                        </div>
-                    </div>
-                </div> */}
 
                 <div className="stats shadow mb-4 w-full text-white">
                     <div className="stat bg-white">
@@ -444,7 +390,7 @@ const DashboardPage = () => {
                             </svg>
                         </div>
                         <div className="stat-title text-[#3d2a21]">
-                            Total Sales
+                            Total Product Sold
                         </div>
                         <div className="stat-value text-[#3d2a21]">
                             {salesCount}
@@ -535,43 +481,62 @@ const DashboardPage = () => {
                         </div>
                     </div>
                 </div>
-
-                <div className="flex gap-2 mb-4">
-                    <div className="chart-container w-[50%] border border-amber-600 p-3 rounded-md">
+                <div className="flex gap-2 mb-4 p-3 shadow flex-col">
+                    {/* <div className="chart-container w-[50%] border border-amber-600 p-3 rounded-md">
                         <h2 className="text-xl mb-4 text-center">
                             Sales by Store (Dine In vs Take Out)
                         </h2>
                         <Pie data={pieChart} />
-                    </div>
-                    <div className="overflow-x-auto w-1/2 h-max">
-                        <table className="min-w-full table-auto">
-                            <thead className="bg-amber-600 text-white">
+                    </div> */}
+                    <h1 className="title text-2xl text-center text-amber-950 mb-5">
+                        Annual Sales
+                    </h1>
+                    <AnnualSalesChart storeId={store} />
+                </div>
+                <div className="flex gap-2 mb-4 p-3 shadow flex-col">
+                    {/* <div className="chart-container w-[50%] border border-amber-600 p-3 rounded-md">
+                        <h2 className="text-xl mb-4 text-center">
+                            Sales by Store (Dine In vs Take Out)
+                        </h2>
+                        <Pie data={pieChart} />
+                    </div> */}
+                    <h1 className="title text-2xl text-center text-amber-950 mb-5">
+                        Sales by Products
+                    </h1>
+
+                    <div className="overflow-auto w-full max-h-96 border border-gray-300 rounded-md shadow-md">
+                        <table className="w-full table-auto">
+                            <thead className="bg-amber-600 text-white sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-4 py-2 text-left">
-                                        Product ID
-                                    </th>
+                                    <th className="px-4 py-2 text-left">#</th>
                                     <th className="px-4 py-2 text-left">
                                         Product Name
                                     </th>
                                     <th className="px-4 py-2 text-left">
-                                        Update
+                                        Category
                                     </th>
                                     <th className="px-4 py-2 text-left">
-                                        Sales
+                                        Quantity Sold
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Subtotal
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {topSold.map((item: any) => (
+                                {topSold.map((item: any, index: number) => (
                                     <tr
                                         key={item.product_id}
-                                        className="border-b"
+                                        className="border-b hover:bg-gray-100"
                                     >
                                         <td className="px-4 py-2">
-                                            {item.product_id}
+                                            {index + 1}
                                         </td>
                                         <td className="px-4 py-2">
                                             {item.product_name}
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            {item.category_name}
                                         </td>
                                         <td className="px-4 py-2">
                                             {item.total_quantity}
@@ -588,26 +553,37 @@ const DashboardPage = () => {
                         </table>
                     </div>
                 </div>
-                <div className="flex mb-4 gap-2">
+                <div className="flex gap-2 mb-4 p-3 shadow flex-col">
                     <div className="chart-container w-[100%] border border-amber-600 p-3 rounded-md">
-                        <h2 className="text-xl mb-4 text-center">
+                        <h1 className="text-2xl mb-5 title text-center">
                             Monthly Sales
-                        </h2>
-                        <Bar data={chartData} />
+                        </h1>
+                        <Bar data={chartData} options={options} />
                     </div>
-                    <div className="chart-container w-[100%] border border-amber-600 p-3 rounded-md">
-                        <h2 className="text-xl mb-4 text-center">
-                            Monthly Sales
-                        </h2>
-                        <SalesLineChart orders={orders} />
-                    </div>
+                    {localStorage.getItem("role") !== "owner" && (
+                        <div className="chart-container w-[100%] border border-amber-600 p-3 rounded-md">
+                            <h1 className="text-2xl mb-5 title text-center">
+                                Peak Hours
+                            </h1>
+                            <SalesLineChart year={year} store_id={store} />
+                        </div>
+                    )}
                 </div>
-                <div className="flex">
-                    <Recommendation
-                        sales={orders}
-                        total_sales={totalSales}
-                        sales_count={salesCount}
-                    />
+                {localStorage.getItem("role") !== "owner" && (
+                    <div className="flex">
+                        <Recommendation
+                            sales={orders}
+                            total_sales={totalSales}
+                            sales_count={salesCount}
+                        />
+                    </div>
+                )}
+
+                <div className="flex gap-2 mb-4 p-3 shadow flex-col">
+                    <h1 className="text-2xl mb-5 title text-center">
+                        Monthly Growth Rate
+                    </h1>
+                    <PercentagePerMonth data={updateMonthsWithPercentages()} />
                 </div>
             </main>
         </section>

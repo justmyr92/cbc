@@ -162,13 +162,16 @@ export const getTopSoldProducts = async () => {
     }
 };
 
-export const getTopSoldProductsNoLimint = async (year: string) => {
+export const getTopSoldProductsNoLimint = async (
+    year: string,
+    store_id: string
+) => {
     try {
         const token = getToken();
 
         // Make the GET request to the server
         const response = await fetch(
-            `${SERVER_URI}/get/top-sold-products-no-limit/${year}`,
+            `${SERVER_URI}/get/top-sold-products-no-limit/${year}/${store_id}`,
             {
                 method: "GET",
                 headers: {
@@ -189,6 +192,35 @@ export const getTopSoldProductsNoLimint = async (year: string) => {
         return await response.json();
     } catch (error) {
         console.error("Error fetching top sold products:", error);
+        throw error;
+    }
+};
+
+export const getPeakHours = async (year: string, store_id: string) => {
+    const token = getToken();
+    try {
+        const response = await fetch(
+            `${SERVER_URI}/get/peak-hours/${year}/${store_id}`,
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { jwt_token: token } : {}),
+                },
+            }
+        );
+
+        // Check if the response is ok
+        if (!response.ok) {
+            throw new Error(
+                `Error: ${response.status} - ${response.statusText}`
+            );
+        }
+
+        // Parse and return the JSON response
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching orders list:", error);
         throw error;
     }
 };

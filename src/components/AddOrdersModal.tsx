@@ -52,35 +52,65 @@ const AddOrdersModal = ({
     //     const ordersMap: { [key: string]: any } = {};
 
     //     rawData.forEach((row: any) => {
-    //         const orderDate = new Date(row["Order Date"]);
-    //         if (isNaN(orderDate.getTime())) {
-    //             // Handle invalid date here
+    //         const transactionNumber = row["Transaction No."]; // Transaction reference
+    //         const orderDateExcel = row["Order Date"]; // Date
+    //         const orderTimeExcel = row["Order Time"]; // Time
+
+    //         let orderDate: string;
+    //         let orderTime: string;
+
+    //         if (typeof orderDateExcel === "number") {
+    //             const jsDate = new Date(
+    //                 (orderDateExcel - 25569) * 86400 * 1000
+    //             ); // Excel to JS date
+    //             orderDate = jsDate.toISOString().split("T")[0]; // Convert to YYYY-MM-DD
+    //         } else if (typeof orderDateExcel === "string") {
+    //             // Convert MM/DD/YYYY to YYYY-MM-DD
+    //             const [month, day, year] = orderDateExcel.split("/");
+    //             orderDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+    //                 2,
+    //                 "0"
+    //             )}`;
+    //         } else {
+    //             throw new Error("Invalid date format");
     //         }
-    //         const formattedDate = orderDate.toISOString(); // Formats to "YYYY-MM-DDTHH:MM:SS.sssZ"
-    //         const transactionNumber = row["Transaction No."]; // Ensure the key matches your data
+
+    //         // Handle the time as a string, parse it into the desired format
+    //         if (typeof orderTimeExcel === "number") {
+    //             // Excel stores time as a fraction of a day, multiply by 24 to get hours
+    //             const totalSeconds = Math.round(orderTimeExcel * 86400);
+    //             const hours = Math.floor(totalSeconds / 3600);
+    //             const minutes = Math.floor((totalSeconds % 3600) / 60);
+    //             const seconds = totalSeconds % 60;
+
+    //             // Format time as HH:mm:ss
+    //             orderTime = `${hours.toString().padStart(2, "0")}:${minutes
+    //                 .toString()
+    //                 .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    //         } else {
+    //             orderTime = orderTimeExcel; // Use the existing time string if it's not a fraction
+    //         }
 
     //         // Check if the order already exists in the map
     //         if (!ordersMap[transactionNumber]) {
     //             ordersMap[transactionNumber] = {
     //                 transaction_number: transactionNumber,
-    //                 order_date: formattedDate, // Ensure the key matches your data
+    //                 order_date: orderDate,
+    //                 order_time: orderTime, // Store the formatted time
     //                 order_type: row["Order Type"],
+    //                 store_id: row["Store ID"], // Add store_id if present
     //                 orderlist: [],
     //                 total: 0, // Initialize total for each transaction
     //             };
     //         }
 
     //         // Create order list item and add it to orderlist
-    //         console.log(row["Product"]);
-
     //         const orderItem = {
     //             category: row["Category"],
     //             product_name: row["Product"],
-    //             //pget product id if name is match
     //             product_id: products.find(
     //                 (product: any) => product.product_name === row["Product"]
     //             )?.product_id,
-
     //             quantity: row["Quantity"],
     //             price: row["Price"],
     //             sub_total: row["Subtotal"],
@@ -90,39 +120,52 @@ const AddOrdersModal = ({
     //         ordersMap[transactionNumber].orderlist.push(orderItem);
 
     //         // Update the total for the transaction
-    //         ordersMap[transactionNumber].total += orderItem.sub_total;
+    //         ordersMap[transactionNumber].total += Number(orderItem.sub_total);
     //     });
 
     //     // Return the array of orders
     //     return Object.values(ordersMap);
     // };
+
     const transformDataToOrderFormat = (rawData: any[]): any[] => {
         const ordersMap: { [key: string]: any } = {};
 
         rawData.forEach((row: any) => {
-            const transactionNumber = row["Transaction No."]; // Ensure the key matches your data
+            const transactionNumber = row["Transaction No."]; // Transaction reference
+            const orderDateTimeExcel = row["Order Date"]; // Combined DateTime column
 
-            // Handle the Excel date serial number
-            const orderDateExcel = row["Order Date"]; // Excel date serial number
-            let orderDate;
+            let orderDate: string;
+            let orderTime: string;
 
-            // Check if the order date is an Excel date serial number
-            if (typeof orderDateExcel === "number") {
+            if (typeof orderDateTimeExcel === "number") {
+                // Excel stores DateTime as a serial number
                 const jsDate = new Date(
-                    (orderDateExcel - 25569) * 86400 * 1000
-                ); // Convert to JavaScript Date
-                orderDate = jsDate.toISOString(); // Convert to ISO string format (YYYY-MM-DDTHH:MM:SS.sssZ)
+                    (orderDateTimeExcel - 25569) * 86400 * 1000
+                ); // Excel to JS date
+                orderDate = jsDate.toISOString().split("T")[0]; // Extract YYYY-MM-DD
+                orderTime = jsDate.toISOString().split("T")[1].split(".")[0]; // Extract HH:mm:ss
+            } else if (typeof orderDateTimeExcel === "string") {
+                // Split string DateTime into date and time
+                const [datePart, timePart] = orderDateTimeExcel.split(" ");
+                // Convert MM/DD/YYYY to YYYY-MM-DD
+                const [month, day, year] = datePart.split("/");
+                orderDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+                    2,
+                    "0"
+                )}`;
+                orderTime = timePart; // Use provided time part
             } else {
-                // Fallback if the date is not a number (maybe a valid date string already)
-                orderDate = orderDateExcel;
+                throw new Error("Invalid DateTime format");
             }
 
             // Check if the order already exists in the map
             if (!ordersMap[transactionNumber]) {
                 ordersMap[transactionNumber] = {
                     transaction_number: transactionNumber,
-                    order_date: orderDate, // Use the formatted date
+                    order_date: orderDate,
+                    order_time: orderTime, // Store the formatted time
                     order_type: row["Order Type"],
+                    store_id: row["Store ID"], // Add store_id if present
                     orderlist: [],
                     total: 0, // Initialize total for each transaction
                 };
@@ -140,15 +183,11 @@ const AddOrdersModal = ({
                 sub_total: row["Subtotal"],
             };
 
-            products.map((product: any) => {
-                console.log(product.product_name, row["Product"], "hehe");
-            });
-
             // Add the item to the orderlist
             ordersMap[transactionNumber].orderlist.push(orderItem);
 
             // Update the total for the transaction
-            ordersMap[transactionNumber].total += orderItem.sub_total;
+            ordersMap[transactionNumber].total += Number(orderItem.sub_total);
         });
 
         // Return the array of orders
@@ -224,7 +263,7 @@ const AddOrdersModal = ({
                     <div>
                         <h4 className="font-bold text-md">Preview Orders</h4>
                         <table className="table w-full mt-2">
-                            <thead>
+                            {/* <thead>
                                 <tr>
                                     <th>Transaction No.</th>
                                     <th>Order Date</th>
@@ -264,6 +303,91 @@ const AddOrdersModal = ({
                                                             className="align-text-top"
                                                         >
                                                             {order.order_date}
+                                                        </td>
+                                                        <td
+                                                            rowSpan={
+                                                                order.orderlist
+                                                                    .length
+                                                            }
+                                                            className="align-text-top"
+                                                        >
+                                                            {order.order_type}
+                                                        </td>
+                                                    </>
+                                                )}
+                                                <td>{item.category}</td>
+                                                <td>{item.product_name}</td>
+                                                <td>{item.quantity}</td>
+                                                <td>
+                                                    Php{" "}
+                                                    {Number(item.price).toFixed(
+                                                        2
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    Php{" "}
+                                                    {Number(
+                                                        item.sub_total
+                                                    ).toFixed(2)}
+                                                </td>
+                                            </tr>
+                                        )
+                                    )
+                                )}
+                            </tbody> */}
+
+                            <thead>
+                                <tr>
+                                    <th>Transaction No.</th>
+                                    <th>Order Date</th>
+                                    <th>Order Time</th>{" "}
+                                    {/* New column for time */}
+                                    <th>Order Type</th>
+                                    <th>Category</th>
+                                    <th>Product Name</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orders.map((order) =>
+                                    order.orderlist.map(
+                                        (item: any, index: number) => (
+                                            <tr
+                                                key={`${order.transaction_number}-${index}`}
+                                            >
+                                                {index === 0 && (
+                                                    <>
+                                                        <td
+                                                            rowSpan={
+                                                                order.orderlist
+                                                                    .length
+                                                            }
+                                                            className="align-text-top"
+                                                        >
+                                                            {
+                                                                order.transaction_number
+                                                            }
+                                                        </td>
+                                                        <td
+                                                            rowSpan={
+                                                                order.orderlist
+                                                                    .length
+                                                            }
+                                                            className="align-text-top"
+                                                        >
+                                                            {order.order_date}
+                                                        </td>
+                                                        <td
+                                                            rowSpan={
+                                                                order.orderlist
+                                                                    .length
+                                                            }
+                                                            className="align-text-top"
+                                                        >
+                                                            {order.order_time}{" "}
+                                                            {/* Display the time */}
                                                         </td>
                                                         <td
                                                             rowSpan={
