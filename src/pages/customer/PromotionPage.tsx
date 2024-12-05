@@ -10,7 +10,7 @@ const PromotionPage = () => {
         const fetchPromotions = async () => {
             try {
                 const promoRes = await fetch(
-                    "https://kape-backend.onrender.com/api/get-promos"
+                    "http://localhost:5000/api/get-promos"
                 );
                 const promoData = await promoRes.json();
                 setPromotions(promoData);

@@ -27,7 +27,7 @@ const MenuPage = () => {
         const fetchMeals = async () => {
             try {
                 const productsRes = await fetch(
-                    "https://kape-backend.onrender.com/api/get/products-by-type/Meal"
+                    "http://localhost:5000/api/get/products-by-type/Meal"
                 );
                 const products = await productsRes.json();
                 setMeals(products);
@@ -40,7 +40,7 @@ const MenuPage = () => {
         const fetchDrinks = async () => {
             try {
                 const productsRes = await fetch(
-                    "https://kape-backend.onrender.com/api/get/products-by-type/Drink"
+                    "http://localhost:5000/api/get/products-by-type/Drink"
                 );
                 const products = await productsRes.json();
                 setDrinks(products);

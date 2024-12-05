@@ -59,7 +59,7 @@ const AddPromoModal = ({
             try {
                 // Make a POST request to the backend to upload the promo
                 const response = await fetch(
-                    "https://kape-backend.onrender.com/api/upload-promo",
+                    "http://localhost:5000/api/upload-promo",
                     {
                         method: "POST",
                         headers: {

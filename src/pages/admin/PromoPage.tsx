@@ -29,7 +29,7 @@ const PromoPage = () => {
         const fetchPromoBanners = async () => {
             try {
                 const response = await fetch(
-                    "https://kape-backend.onrender.com/api/get-promos"
+                    "http://localhost:5000/api/get-promos"
                 );
                 if (!response.ok)
                     throw new Error("Failed to fetch promo banners");
@@ -142,7 +142,7 @@ const PromoPage = () => {
                 try {
                     // Send DELETE request to the API to delete the promo
                     const response = await fetch(
-                        `https://kape-backend.onrender.com/api/delete-promo/${id}`,
+                        `http://localhost:5000/api/delete-promo/${id}`,
                         {
                             method: "DELETE",
                             headers: {

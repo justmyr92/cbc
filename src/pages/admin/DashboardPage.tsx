@@ -315,18 +315,17 @@ const DashboardPage = () => {
     return (
         <section className="dashboard flex h-screen">
             <Sidebar />
-            <main className="main__container h-full w-4/5 p-5 overflow-auto">
-                <div className="main__header flex justify-between items-center">
+            <main className="main__container h-full w-4/5 overflow-auto">
+                {/* <div className="main__header flex justify-between items-center">
                     <h1 className="main__title text-3xl uppercase">
                         Dashboard
                     </h1>
                 </div>
 
-                <hr className="border border-amber-600 my-3" />
+                <hr className="border border-amber-600 my-3" /> */}
 
-                {/* Control Box */}
-                <div className="control-box flex items-start space-x-4 mb-4">
-                    {/* Year Selector */}
+                {/* <div className="control-box flex items-start space-x-4 mb-4">
+                    
                     <div className="year-selector">
                         <label htmlFor="year" className="mr-2">
                             Year
@@ -340,11 +339,9 @@ const DashboardPage = () => {
                             <option value="2024">2024</option>
                             <option value="2023">2023</option>
                             <option value="2022">2022</option>
-                            {/* Add more years as needed */}
                         </select>
                     </div>
 
-                    {/* Store Selector */}
                     {storeID ? (
                         <div className="store-selector">
                             <label htmlFor="store" className="mr-2">
@@ -482,24 +479,14 @@ const DashboardPage = () => {
                     </div>
                 </div>
                 <div className="flex gap-2 mb-4 p-3 shadow flex-col">
-                    {/* <div className="chart-container w-[50%] border border-amber-600 p-3 rounded-md">
-                        <h2 className="text-xl mb-4 text-center">
-                            Sales by Store (Dine In vs Take Out)
-                        </h2>
-                        <Pie data={pieChart} />
-                    </div> */}
+                   
                     <h1 className="title text-2xl text-center text-amber-950 mb-5">
                         Annual Sales
                     </h1>
                     <AnnualSalesChart storeId={store} />
                 </div>
                 <div className="flex gap-2 mb-4 p-3 shadow flex-col">
-                    {/* <div className="chart-container w-[50%] border border-amber-600 p-3 rounded-md">
-                        <h2 className="text-xl mb-4 text-center">
-                            Sales by Store (Dine In vs Take Out)
-                        </h2>
-                        <Pie data={pieChart} />
-                    </div> */}
+                   
                     <h1 className="title text-2xl text-center text-amber-950 mb-5">
                         Sales by Products
                     </h1>
@@ -584,7 +571,79 @@ const DashboardPage = () => {
                         Monthly Growth Rate
                     </h1>
                     <PercentagePerMonth data={updateMonthsWithPercentages()} />
-                </div>
+                </div> */}
+
+                {localStorage.getItem("role") === "owner" && (
+                    <iframe
+                        width="100%"
+                        height="1000"
+                        src="https://lookerstudio.google.com/embed/reporting/15f19cd5-6041-4fab-b4af-e1b630eeb380/page/p_f7fr50qjnd"
+                        frameBorder="0" // Correct casing
+                        style={{
+                            border: 0,
+                        }}
+                        allowFullScreen // Correct casing
+                        sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                    ></iframe>
+                )}
+
+                {localStorage.getItem("role") === "manager" &&
+                    localStorage.getItem("store_id")?.toString() === "1" && (
+                        <iframe
+                            width="100%"
+                            height="1000"
+                            src="https://lookerstudio.google.com/embed/reporting/9154a1a3-1ffa-42d9-a56e-2c9c5d4ab661/page/1K3XE"
+                            frameBorder="0" // Correct casing
+                            style={{
+                                border: 0,
+                            }}
+                            allowFullScreen // Correct casing
+                            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                        ></iframe>
+                    )}
+
+                {localStorage.getItem("role") === "manager" &&
+                    localStorage.getItem("store_id")?.toString() === "2" && (
+                        <iframe
+                            width="100%"
+                            height="1000"
+                            src="https://lookerstudio.google.com/embed/reporting/f5201d0e-6539-43a3-9a7f-e96ce1c71a8d/page/OC2XE"
+                            frameBorder="0" // Correct casing
+                            style={{
+                                border: 0,
+                            }}
+                            allowFullScreen // Correct casing
+                            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                        ></iframe>
+                    )}
+                {localStorage.getItem("role") === "manager" &&
+                    localStorage.getItem("store_id")?.toString() === "3" && (
+                        <iframe
+                            width="100%"
+                            height="1000"
+                            src="https://lookerstudio.google.com/embed/reporting/376dcb5a-69b7-4f32-9f94-6076a059793e/page/IL3XE"
+                            frameBorder="0" // Correct casing
+                            style={{
+                                border: 0,
+                            }}
+                            allowFullScreen // Correct casing
+                            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                        ></iframe>
+                    )}
+                {localStorage.getItem("role") === "manager" &&
+                    localStorage.getItem("store_id")?.toString() === "3" && (
+                        <iframe
+                            width="100%"
+                            height="1000"
+                            src="https://lookerstudio.google.com/embed/reporting/0e1cb869-b1ad-4178-81d9-23c111483d2d/page/WL3XE"
+                            frameBorder="0" // Correct casing
+                            style={{
+                                border: 0,
+                            }}
+                            allowFullScreen // Correct casing
+                            sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                        ></iframe>
+                    )}
             </main>
         </section>
     );
